@@ -10,14 +10,27 @@ out = open(argv[2], 'w')
 
 root = tree.getroot()
 
-service_filter = ['http', 'https']
+service_filter = ['http', 'https', 'https-alt']
+
+service_name_to_protocol_map = {
+    'http':'http',
+    'https':'https',
+    'https-alt':'https',
+    'domain':'dns',
+    'ldap':'ldap',
+    'ssh':'ssh',
+}
 
 for host in root.findall('host'):
+    print(host.find('address').attrib['addr'])
     for port in host.find('ports').findall('port'):
-        service_name = port.find('service').attrib['name']
-        if service_name in service_filter:
-            host_addr = host.find('address').attrib['addr']
-            port_number = port.attrib['portid']
-            out.write(f'{service_name}://{host_addr}:{port_number}\n')
+        state = port.find('state').attrib['state']
+        if state == 'open':
+            service_name = port.find('service').attrib['name']
+            if service_name in service_filter:
+                host_addr = host.find('address').attrib['addr']
+                protocol = service_name_to_protocol_map[service_name]
+                port_number = port.attrib['portid']
+                out.write(f'{protocol}://{host_addr}:{port_number}\n')
 
 out.close()
